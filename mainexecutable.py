@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
@@ -17,7 +16,6 @@ def create_ui():
     quad_height = screen_height // 2
     square_size = screen_width // 10
 
-   
     x1 = (screen_width // 2) - (square_size // 2)
     y1 = 0
     x2 = x1 + square_size
@@ -28,12 +26,10 @@ def create_ui():
     gx2 = gx1 + square_size
     gy2 = gy1 + square_size
 
-
     bx1 = screen_width - square_size
     by1 = (screen_height // 2) - (square_size // 2)
     bx2 = screen_width
     by2 = by1 + square_size
-
 
     yx1 = (screen_width // 2) - (square_size // 2)
     yy1 = screen_height - square_size
@@ -50,10 +46,10 @@ def create_ui():
     canvas.create_rectangle(quad_width, quad_height, screen_width, screen_height, fill='gray', outline='white', tags='quadrant')
 
     # Create the squares with tags
-    red_square = canvas.create_rectangle(x1, y1, x2, y2, fill="red", tags='square')
-    green_square = canvas.create_rectangle(gx1, gy1, gx2, gy2, fill="red", tags='square')
-    blue_square = canvas.create_rectangle(bx1, by1, bx2, by2, fill="red", tags='square')
-    yellow_square = canvas.create_rectangle(yx1, yy1, yx2, yy2, fill="red", tags='square')
+    red_square = canvas.create_rectangle(x1, y1, x2, y2, fill="red", tags=('square', 'red'))
+    green_square = canvas.create_rectangle(gx1, gy1, gx2, gy2, fill="red", tags=('square', 'green'))
+    blue_square = canvas.create_rectangle(bx1, by1, bx2, by2, fill="red", tags=('square', 'blue'))
+    yellow_square = canvas.create_rectangle(yx1, yy1, yx2, yy2, fill="red", tags=('square', 'yellow'))
 
     # Create exclamation marks on each square
     exclamations = {}
@@ -74,10 +70,10 @@ def create_ui():
         yellow_center_y = (yy1 + yy2) // 2
 
         # Add exclamation marks to the canvas and store their IDs
-        exclamations['red'] = canvas.create_text(red_center_x, red_center_y, text='!', font=("Arial", 40), fill='yellow')
-        exclamations['green'] = canvas.create_text(green_center_x, green_center_y, text='!', font=("Arial", 40), fill='yellow')
-        exclamations['blue'] = canvas.create_text(blue_center_x, blue_center_y, text='!', font=("Arial", 40), fill='yellow')
-        exclamations['yellow'] = canvas.create_text(yellow_center_x, yellow_center_y, text='!', font=("Arial", 40), fill='yellow')
+        exclamations['red'] = canvas.create_text(red_center_x, red_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'red'))
+        exclamations['green'] = canvas.create_text(green_center_x, green_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'green'))
+        exclamations['blue'] = canvas.create_text(blue_center_x, blue_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'blue'))
+        exclamations['yellow'] = canvas.create_text(yellow_center_x, yellow_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'yellow'))
 
     create_exclamation_marks()
 
@@ -144,16 +140,15 @@ def create_ui():
     # Function to create traffic light signal UI
     def create_traffic_light(x, y):
         # Traffic light rectangle
-        light = canvas.create_rectangle(x, y, x + 60, y + 180, fill='black', outline='white')
+        light = canvas.create_rectangle(x, y, x + 60, y + 180, fill='black', outline='white', tags='traffic_light')
         # Red light
-        red_light =  canvas.create_oval(x + 10, y + 10, x + 50, y + 50, fill='red', outline='white')
+        red_light =  canvas.create_oval(x + 10, y + 10, x + 50, y + 50, fill='red', outline='white', tags='traffic_light')
         # Yellow light
-        yellow_light = canvas.create_oval(x + 10, y + 65, x + 50, y + 105, fill='yellow', outline='white')
+        yellow_light = canvas.create_oval(x + 10, y + 65, x + 50, y + 105, fill='yellow', outline='white', tags='traffic_light')
         # Green light
-        green_light = canvas.create_oval(x + 10, y + 120, x + 50, y + 160, fill='green', outline='white')
+        green_light = canvas.create_oval(x + 10, y + 120, x + 50, y + 160, fill='green', outline='white', tags='traffic_light')
         
         return light, red_light, yellow_light, green_light
-    
 
     create_traffic_light(20, 150)  
     create_traffic_light(screen_width - 80, 150)  
@@ -189,7 +184,7 @@ def create_ui():
                     y = screen_height - (quad_height // 2)
 
                 # Create an image item on the canvas to display the video frames
-                video_items[section] = canvas.create_image(x, y, anchor='center')
+                video_items[section] = canvas.create_image(x, y, anchor='center', tags='video')
 
                 # Start a new thread to play the video
                 thread = threading.Thread(target=play_video, args=(section,))
@@ -217,8 +212,11 @@ def create_ui():
                     if video_items[section]:
                         canvas.itemconfig(video_items[section], image=imgtk)
                         canvas.image_dict[section] = imgtk   
+                        # Raise traffic lights and exclamation marks to the top
+                        canvas.tag_raise('traffic_light')
                         canvas.tag_raise('square')
-                        canvas.tag_raise(exclamations[section])
+                        for exclamation in exclamations.values():
+                            canvas.tag_raise(exclamation)
                 root.after(0, update_frame)
             else:
                 # Restart the video or break
@@ -237,10 +235,8 @@ def create_ui():
                 video_items[section] = None
                 stop_threads[section] = False
 
-    
     canvas.image_dict = {}
 
- 
     button_tl = tk.Button(root, text="Pick Video for TL", command=lambda: open_file("TL"), font=("Arial", 20), fg='white', bg='blue')
     button_tl.place(x=20, y=20)
 
@@ -265,9 +261,7 @@ def create_ui():
     button_remove_br = tk.Button(root, text="Remove Video for BR", command=lambda: remove_video("BR"), font=("Arial", 20), fg='white', bg='orange')
     button_remove_br.place(x=screen_width - 280, y=screen_height - 160)
 
-    
     def start_function():
-     
         pass
 
     # Create the "Start" button at the center of the screen
@@ -285,3 +279,5 @@ def create_ui():
     root.mainloop()
 
 create_ui()
+
+
