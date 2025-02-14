@@ -44,7 +44,6 @@ def create_ui():
     canvas.create_rectangle(0, quad_height, quad_width, screen_height, fill='gray', outline='white', tags='quadrant')
     canvas.create_rectangle(quad_width, quad_height, screen_width, screen_height, fill='gray', outline='white', tags='quadrant')
 
-
     red_square = canvas.create_rectangle(x1, y1, x2, y2, fill="red", tags=('square', 'red'))
     green_square = canvas.create_rectangle(gx1, gy1, gx2, gy2, fill="red", tags=('square', 'green'))
     blue_square = canvas.create_rectangle(bx1, by1, bx2, by2, fill="red", tags=('square', 'blue'))
@@ -52,20 +51,15 @@ def create_ui():
 
     exclamations = {}
 
-  
     def create_exclamation_marks():
         red_center_x = (x1 + x2) // 2
         red_center_y = (y1 + y2) // 2
-
         green_center_x = (gx1 + gx2) // 2
         green_center_y = (gy1 + gy2) // 2
-
         blue_center_x = (bx1 + bx2) // 2
         blue_center_y = (by1 + by2) // 2
-
         yellow_center_x = (yx1 + yx2) // 2
         yellow_center_y = (yy1 + yy2) // 2
-
         exclamations['red'] = canvas.create_text(red_center_x, red_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'red'))
         exclamations['green'] = canvas.create_text(green_center_x, green_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'green'))
         exclamations['blue'] = canvas.create_text(blue_center_x, blue_center_y, text='!', font=("Arial", 40), fill='yellow', tags=('exclamation', 'blue'))
@@ -81,19 +75,15 @@ def create_ui():
     blink_state = True
     active_squares = []
 
-
     def blink():
         nonlocal blink_state
         if active_squares:
-      
             state = 'normal' if blink_state else 'hidden'
             for square in active_squares:
                 canvas.itemconfigure(exclamations[square], state=state)
             blink_state = not blink_state
-          
             canvas.after(500, blink)
         else:
-          
             for exclamation in exclamations.values():
                 canvas.itemconfigure(exclamation, state='normal')
 
@@ -101,7 +91,6 @@ def create_ui():
         if active_squares:
             blink()
         else:
-           
             for exclamation in exclamations.values():
                 canvas.itemconfigure(exclamation, state='normal')
 
@@ -131,38 +120,39 @@ def create_ui():
 
     root.bind('<KeyPress>', handle_key)
 
-    # Function to create a traffic light at a specific position
-    def create_traffic_light(x, y):
-        # Traffic light rectangle
+    a = 1
+    b = 1
+    c = 1
+    d = 1
+
+    def create_traffic_light(x, y, state):
         light = canvas.create_rectangle(x - 30, y - 90, x + 30, y + 90, fill='black', outline='white', tags='traffic_light')
         red_light = canvas.create_oval(x - 20, y - 60, x + 20, y - 20, fill='black', outline='white', tags='traffic_light')
         yellow_light = canvas.create_oval(x - 20, y - 10, x + 20, y + 30, fill='black', outline='white', tags='traffic_light')
         green_light = canvas.create_oval(x - 20, y + 40, x + 20, y + 80, fill='black', outline='white', tags='traffic_light')
-        
-       
-        canvas.itemconfig(red_light, fill='red')
+        if state == 1:
+            canvas.itemconfig(red_light, fill='red')
+        elif state == 2:
+            canvas.itemconfig(yellow_light, fill='yellow')
+        elif state == 3:
+            canvas.itemconfig(green_light, fill='green')
         canvas.tag_raise('traffic_light')
 
-
-    create_traffic_light(quad_width // 2, quad_height // 2)  
-    create_traffic_light(screen_width - (quad_width // 2), quad_height // 2)  
-    create_traffic_light(quad_width // 2, screen_height - (quad_height // 2))  
-    create_traffic_light(screen_width - (quad_width // 2), screen_height - (quad_height // 2)) 
+    create_traffic_light(quad_width // 2, quad_height // 2, a)
+    create_traffic_light(screen_width - (quad_width // 2), quad_height // 2, b)
+    create_traffic_light(quad_width // 2, screen_height - (quad_height // 2), c)
+    create_traffic_light(screen_width - (quad_width // 2), screen_height - (quad_height // 2), d)
 
     videos = {"TL": None, "TR": None, "BL": None, "BR": None}
     video_threads = {"TL": None, "TR": None, "BL": None, "BR": None}
-    video_items = {"TL": None, "TR": None, "BL": None, "BR": None}  
+    video_items = {"TL": None, "TR": None, "BL": None, "BR": None}
     stop_threads = {"TL": False, "TR": False, "BL": False, "BR": False}
 
-    
     def open_file(section):
         file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4;*.avi;*.mov;*.mkv")])
-
         if file_path:
             cap = cv2.VideoCapture(file_path)
             videos[section] = cap
-
-            # Place an image item in the respective section if not already present
             if video_items[section] is None:
                 if section == "TL":
                     x = quad_width // 2
@@ -176,54 +166,39 @@ def create_ui():
                 elif section == "BR":
                     x = screen_width - (quad_width // 2) - 240
                     y = screen_height - (quad_height // 2)
-
-                # Create an image item on the canvas to display the video frames
                 video_items[section] = canvas.create_image(x, y, anchor='center', tags='video')
-
-                # Start a new thread to play the video
                 thread = threading.Thread(target=play_video, args=(section,))
                 thread.daemon = True
-
                 video_threads[section] = thread
                 thread.start()
 
-    # Function to play video in a section
     def play_video(section):
         cap = videos[section]
         while cap.isOpened() and not stop_threads[section]:
             ret, frame = cap.read()
             if ret:
-                # Process the frame with your ML algorithm here
-
-                # Convert the frame to RGB and resize
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.resize(frame, (quad_width, quad_height))
                 img = Image.fromarray(frame)
                 imgtk = ImageTk.PhotoImage(image=img)
-
-                # Schedule UI update on the main thread
                 def update_frame():
                     if video_items[section]:
                         canvas.itemconfig(video_items[section], image=imgtk)
                         canvas.image_dict[section] = imgtk   
-                        # Raise traffic lights and exclamation marks to the top
                         canvas.tag_raise('traffic_light')
                         canvas.tag_raise('square')
                         for exclamation in exclamations.values():
                             canvas.tag_raise(exclamation)
                 root.after(0, update_frame)
             else:
-                # Restart the video or break
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         cap.release()
 
-    # Function to remove the video from a section
     def remove_video(section):
         if videos[section]:
             stop_threads[section] = True
             videos[section].release()
             videos[section] = None
-
             if video_items[section]:
                 canvas.delete(video_items[section])
                 video_items[section] = None
@@ -258,11 +233,9 @@ def create_ui():
     def start_function():
         pass
 
-
     start_button = tk.Button(root, text="Start", command=start_function, font=("Arial", 24), fg='white', bg='green')
     start_button.place(relx=0.5, rely=0.5, anchor='center')
 
-   
     buttons = [button_tl, button_tr, button_bl, button_br,
                button_remove_tl, button_remove_tr, button_remove_bl, button_remove_br,
                start_button]
